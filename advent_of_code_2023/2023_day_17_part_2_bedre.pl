@@ -6,8 +6,8 @@
 # Om resultatet:
 # Nådde "svar så langt: 773" som stabiliserte seg i runde 38 og "ant: 6407651"
 # uten nubbesjans-beskrankningen) eller "ant: 2421973" med,
-# økte ikke etter runde 47. Stoppkriterium er tre runder
-# uten at "ant: x" har økt.
+# økte ikke etter runde 47. Stoppkriterium er x runder
+# uten at "ant: ....." har økt.
 
 # Brute force! Det finnes det nok en mindre brutal metode med smartere
 # DP (dynamic programming) og caching og rekursjon.
@@ -39,7 +39,7 @@ my @avstand;$avstand[$_]=do{my($x,$y)=($_%$vidde,int($_/$vidde));($vidde-2-$x) +
 my $siste=$pos[-1];
 my %er_pos; @er_pos{@pos}=();
 
-my @min_avstand=finn_min_avstander();
+my @min_avstand = finn_min_avstander();  #speedup
 
 say"Vidde: $vidde   hoeyde: $hoeyde   ant pos: ".@pos."   siste pos: $pos[-1]";# exit;
 
@@ -54,9 +54,8 @@ while(1){
 	my $pos_siffer=substr($kart,$pos,1);
 	my $er_siste=$pos==$siste;
 	my $sumpos=$sum{$pos};
-	my $avstand_pos=$avstand[$pos];
 	my $min_avstand_pos=$min_avstand[$pos];
-	for my $r (qw(H V O N)){
+	for my $r (qw(H V O N)){ #retningene
 	    my $p=$pos+$r{$r};
 	    my $sump=$sum{$p};
 	    next if !exists$er_pos{$p};
@@ -64,49 +63,44 @@ while(1){
 	    my @ikke_nubbesjans;
 	    for(keys %{$sum{$p}}){
 		my $steg=$_.$omvendt;
-		next if $steg=~/(?:HV|VH|ON|NO)$/;                #ikke rygge
-		next if $_ and substr($steg,-1,1) ne substr($steg,-2,1) and $steg=~/(.)\1*.$/ and length($&)<5; #ikke sving før minst 4
-#		next if $steg=~/(?:(.)\1*)(.)$/ and $2 ne $1 and length($&)<5; #ikke sving før minst 4
-		#next if $steg=~/((.)\2*)(.)$/ and $2 ne $3 and length($1)<4;
-		#next if $steg=~/(H+[VON]|V+[HON]|O+[HVN]|N+[HVO])$/ and length($1)<5; #tregere
-	        #next if $steg=~/(.)\1\1\1\1\1\1\1\1\1\1$/;       #kan ikke 11 på rad
-		next if $steg=~/(?:H{11}|V{11}|O{11}|N{11})$/;    #kan ikke 11 på rad
-		next if $er_siste and $steg !~ /(.)\1\1\1$/;      #må ende på minst fire på rad i samme retning
-		#next if $steg=~/(.)\1\1\1$/;     #part 1: kan ikke fire på rad
+		next if $steg=~/(?:HV|VH|ON|NO)$/;             #ikke rygge
+		next if $_ and substr($steg,-1,1) ne
+		               substr($steg,-2,1)
+		     and $steg=~/(.)\1*.$/ and length($&)<5;   #ikke sving før minst 4
+		next if $steg=~/(?:H{11}|V{11}|O{11}|N{11})$/; #kan ikke 11 på rad
+		next if $er_siste and $steg !~ /(.)\1\1\1$/;   #må ende på minst fire på rad i samme retning
+		# next if $steg=~/(.)\1\1\1$/;                 #part 1: kan ikke fire på rad
 		$steg=substr($steg,-10) if length($steg)>10; #hm
 		my $her=$pos_siffer+$$sump{$_};
-#		next if $her+$avstand_pos > $best_saa_langt; #ikke nubbesjans å nå fram
-		next if $her+$min_avstand_pos > $best_saa_langt+4 and push@ikke_nubbesjans,$_; #hm+4
+		next if $her+$min_avstand_pos > $best_saa_langt+4 #<-- speedup  (hm +4 nødv for _ex)
+		    and push @ikke_nubbesjans, $_; 
 		$$sumpos{$steg} = $her if !exists$$sumpos{$steg} || $her < $$sumpos{$steg};
 	    }
-	    delete@{$sum{$p}}{@ikke_nubbesjans};
+	    delete @{$sum{$p}}{@ikke_nubbesjans}; #speedup
 	}
     }
     my $ant=sum map 0+keys%{$sum{$_}}, @pos;
-    #    print !exists$er_pos{$_}?"\n":sprintf("%3d ",minpos($_)) for 0..$pos[-1];print"\n";
+    # print !exists$er_pos{$_}?"\n":sprintf("%3d ",minpos($_)) for 0..$pos[-1];print"\n";
     my($mi,$ss)=(int((time()-$^T)/60),(time()-$^T)%60);
     $best_saa_langt=minpos($pos[-1]) if minpos($pos[-1])>0;
-    print"runde: $runde   ant: $ant   siste pos: $pos[-1]   tid: ${mi}m ${ss}s   svar så langt: ".minpos($pos[-1])."\n";
+    print "runde: $runde   ant: $ant   siste pos: $pos[-1]   tid: ${mi}m ${ss}s   svar så langt: ".minpos($pos[-1])."\n";
     push @ant, $ant;
     last if @ant>20 and $ant[-2]==$ant[-1] and $ant[-3]==$ant[-1] and $ant[-4]==$ant[-1];
-    #TODO: bør få bedre stoppkriterium? bruker her bare: hvis samme $ant i x siste runder
 }
 say "svar: ".minpos($pos[-1]);
 
-sub finn_min_avstander {
-    my @ma;
+sub finn_min_avstander { #unødv, kun for speedup
+    my @ma; $ma[$siste]=0;
     my $runde=0;
-    $ma[$siste]=0;
     say"siste: $siste";
-    my @r=@r{qw(H V O N)};
-    my @ma_forrige=();
+    my @r=@r{qw(H V O N)}; #høyre, venstre, opp, ned
     while(1){
-	my $rundeendringer=0;
-	$runde++; #say"ma runde: $runde";	
+	$runde++;
 	print "finn_min_avstander() runder: $runde\r";
+	my $rundeendringer=0;
 	for my $pos (@pos){
-	    my $siffer=substr($kart,$pos,1);
-	    my @ser=grep defined$ma[$_],grep 0<=$_&&$_<length($kart),map{$pos+$_}@r;
+	    my $siffer = substr($kart,$pos,1);
+	    my @ser = grep defined$ma[$_], grep 0<=$_&&$_<length($kart), map $pos+$_, @r;
 	    for(@ser){
 		if( !defined$ma[$pos] || $siffer+$ma[$_] < $ma[$pos] ){
 		    $ma[$pos]=$siffer+$ma[$_];
@@ -118,6 +112,5 @@ sub finn_min_avstander {
     }
     #print substr($kart,$_,1) eq "\n" ? "\n" : sprintf"%3d ",defined$ma[$_]?$ma[$_]:-1 for 0..length($kart)-1;
     print"\n";
-    #exit;
-    @ma;
+    return @ma;
 }
