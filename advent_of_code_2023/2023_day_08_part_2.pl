@@ -1,47 +1,20 @@
-use v5.10;
-use Acme::Tools qw(srlz);
-use List::Util qw(sum);
-use List::MoreUtils qw(any);
+# https://adventofcode.com/2023/day/8 - del 2
+# kjør:
+#
+# perl 2023_day_08_part_2.pl 2023_day_08_ex.txt     # svar: 2
+# perl 2023_day_08_part_2.pl 2023_day_08_ex2.txt    # svar: 6
+# perl 2023_day_08_part_2.pl 2023_day_08_input.txt  # svar: 13289612809129           0.024 sek
+#
+# nodes: 750   instructions: 263
+# svar: lcm(20777,15517,13939,17621,18673,11309) = 13289612809129
 
-my@i=split//,<>=~/\w+/?$&:die;
-while(<>){
-    my($n,$l,$r)=/(\w+)/g;
-    next if !$n;
-    $n{$n}={L=>$l,R=>$r};
-}
-my$steps=0;
-my @jobs=split/,/,$ENV{JOBS};
-my@now=grep/A$/,sort keys%n;
-@now=@now[@jobs] if @jobs;
-say srlz(\@i,'i');
-say srlz(\@now,'now');
-#die srlz(\@i,'i').srlz(\%n,'n','',1).srlz(\@now,'now');
-say srlz(\@jobs,'jobs');
-my $nows=0+@now;
-say "nows: ".@now;
-open my $fh,'>',"/tmp/job".join('',@jobs) or die;
-W:
-while(1){
-    #last if !grep/[^Z]$/,@now;
-    last if !any{/[^Z]$/}@now;
-#    my$x="@now ";
-#    say"x: <$x>";
-#    last;
-#    last unless "@now "=~/[A-X] /;
+use strict; use warnings; use v5.10;
 
-    my $i=$i[$steps%@i];
-    my $a=0;
-#    ($_=$n{$_}{$i} // die) && /Z$/ && ++$a for @now;
-    $_=$n{$_}{$i} // die for @now;
-    #    $now=$n{$now}{$i}//die;
-    if( $steps%1e4==0 ){
-	my $rt=time()-$^T;
-	print "steps: $steps   steps pr sek: ".int($steps/($rt+1e-6))."            \r";
-	last if $rt>2;
-    }
-    $steps++;
-#    last if $a==@now;
-#    /[A-X]$/ and next W for @now; last;
-}
-say;
-say "steps: $steps";
+sub lcm { my($a,$b,@r)=@_; @_==1?$_[0]:@r ? lcm($a,lcm($b,@r)) : $a*$b/gcd($a,$b) }
+sub gcd { my($a,$b,@r)=@_; @r ? gcd($a,gcd($b,@r)) : $b==0 ? $a : gcd($b, $a % $b) }
+
+my @i = split //, <> =~ /\w+/ ? $& : die;
+my %n; /(\w+).*?(\w+).*?(\w+)/ and $n{$1} = { L=>$2, R=>$3 } for <>;
+my @s = map { my $step=0; $_ = $n{$_}{$i[ $step++ % @i ] } while !/Z$/; $step } grep /A$/, sort keys %n;
+say "nodes: ".keys(%n)."   instruksjoner: ".@i;
+say "svar: lcm(@{[join',',@s]}) = ", lcm(@s);
