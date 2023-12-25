@@ -1,4 +1,4 @@
-# https://adventofcode.com/2023/day/8 - del 2
+# https://adventofcode.com/2023/day/9 - del 1
 # kjør:
 #
 # perl 2023_day_09.pl 2023_day_09_ex.txt     # svar: 114
