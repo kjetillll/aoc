@@ -3,63 +3,30 @@
 #
 # perl 2023_day_11_part_2.pl 2023_day_11_input.txt  # svar: 717878258016               0.75 sek
 
-$_ = join'',<>;    print s/\n/<\n/gr;  info($_);
-my $ekspander = 1_000_000;
-my %tomrad = map { ($_ => $ekspander) } tomme_linjer( $_);
-my %tomkol = map { ($_ => $ekspander) } tomme_linjer( transpose($_) );
+# perl 2023_day_11_part_2_ryddet.pl 2023_day_11_input.txt    # 1.3 sek => 717878258016
 
-my $w = /.*/ ? 1+length$& : die;
-print "width: $w\n";
-my @g = pos_galakser($_);
-my @par;
-for my $i (0 .. $#g-1){
-    for my $j ($i+1 .. $#g){
-        push @par, [@g[$i,$j]];
-    }
-}
+use v5.10; use List::Util 'sum'; use Algorithm::Combinatorics 'combinations';
 
-printf "svar: %d\n", eval join '+', map dist(@$_), @par;
+$_ = join'',<>;                            # $_ = slurp universet
+my $span_empty = 1_000_000;                # bruk 2 for day 11 part 1
+my @rad_span = linje_span($_);              # ikke-tomme rader blir 1, tomme blir 1e6
+my @kol_span = linje_span( transpose($_) ); # ikke-tomme kolonner blir 1, tomme blir 1e6
 
-sub tomme_linjer {
-    my $s = shift;
-    my $i = 0;
-    map $$_[0], grep { $$_[1] =~ /^\.+$/ } map [$i++, $_], split /\n/, $s;
-}
-sub pos2xy{
-    my $pos = shift;
-    ( int($pos / $w), $pos % $w );
-}
+my $wi = /.*/ ? 1+length$& : die;          # width
+my @galpos = posisjoner($_,'#');           # finn posisjonene til galaksene
+my @par = combinations(\@galpos, 2);
+say "svar: ", sum map dist(@$_), @par;
+
+sub linje_span { map /#/ ? 1 : $span_empty, split /\n/, shift }
+sub pos2xy     { my($pos,$wi) = @_; ( int($pos / $wi), $pos % $wi ) }
+sub posisjoner { my @p; $_[0] =~ s/$_[1]/push@p,pos;$&/ge; @p }
 sub dist {
-    my($pos1, $pos2) = @_;
-    my($x1, $y1, $x2, $y2) = map pos2xy($_), $pos1, $pos2;
-    ($x1,$x2) = ($x2,$x1) if $x2 < $x1;
-    ($y1,$y2) = ($y2,$y1) if $y2 < $y1;
-    my $dist = 0;
-    for( $x1+1 .. $x2 ){ $dist += $tomrad{$_} // 1 }
-    for( $y1+1 .. $y2 ){ $dist += $tomkol{$_} // 1 }
-    $dist
-}
-sub pos_galakser {
-    my $s = shift;
-    grep substr($s, $_, 1) eq '#', 0 .. length $s;
-}
-sub info {
-    my $s = shift;
-    printf "linjer: %d\n", 0 + grep /\S/, split /\n/, $s;
-    printf "width: %d\n", $s =~ /.*/ ? length$& : die;
-    printf "lengde: %d\n", length$s;
-}
-sub expand {
-    my $s = shift;
-    $s =~ s/^\.+\n/$&$&/gmr
+    my($x1,$y1, $x2,$y2) = map pos2xy($_,$wi), @_;
+    sum ( map $rad_span[$_], $x1<$x2 ? ($x1+1..$x2) : ($x2+1..$x1) ),
+        ( map $kol_span[$_], $y1<$y2 ? ($y1+1..$y2) : ($y2+1..$y1) )
 }
 sub transpose {
-    my $s = shift;
-    my $w = $s=~/.*/ ? length$& : die;
-    my @s;
-    for( split /\n/, $s ){
-        my $i = 0;
-        $s[ $i++ ] .= $_ for split //;
-    }
-    join "", map "$_\n", @s;
+    my($s, @t) = @_;
+    for( split /\n/, $s ){ my $i = 0; $t[ $i++ ] .= $_ for split // }
+    join "", map "$_\n", @t;
 }
