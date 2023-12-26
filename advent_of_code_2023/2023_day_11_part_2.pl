@@ -16,7 +16,7 @@ my @par = combinations(\@galpos, 2);
 
 say "svar: ", sum grep defined, map dist(@$_), @par; # hm grep defined
 
-sub linje_span { map /\#/ ? 1 : $span_empty, split /\n/, shift }
+sub linje_span { map /#/ ? 1 : $span_empty, split /\n/, shift }
 sub pos2xy     { my($pos,$wi) = @_; ( int($pos / $wi), $pos % $wi ) }
 sub posisjoner { my($s,$t) = @_; my @p; $s =~ s/$t/ push @p, pos$s; $& /ge; @p }
 sub dist {
