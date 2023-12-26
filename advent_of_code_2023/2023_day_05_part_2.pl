@@ -17,6 +17,8 @@
 # Når de er ferdige:
 #
 # grep 'svar: ' /tmp/d5j*        #svaret er da det minste tallet av disse
+#
+# svar: 78775051       i /tmp/d5j5 (jobb 5)
 
 # Trolig bedre idé, ikke gjort:
 # i stedet for å prøve alle $x, og kun øke den med 1, finn hvor mye man kan øke $x ved å finne grensene og registrere "segmentene", også de tomme
