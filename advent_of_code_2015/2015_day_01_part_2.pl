@@ -1,3 +1,3 @@
-++$pos, $floor += /\(/ ? 1 : -1, $floor==-1 and die "$pos\n" for <> =~ /./g
+++$pos, $floor += /\(/ ? 1 : -1, $floor==-1 and print("Answer: $pos\n"),last for <> =~ /./g
 
-#1795
+#Answer: 1795

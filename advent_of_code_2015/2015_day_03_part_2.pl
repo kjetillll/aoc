@@ -9,6 +9,6 @@ for( <> =~ /./g ){
     ($x,$y,$rx,$ry) = ($rx,$ry,$x,$y); #swap pos with robo
 }
 
-print 0 + keys %gh, "\n";
+print "Answer: ", 0 + keys %gh, "\n";
 
-#2341
+#Answer: 2341
