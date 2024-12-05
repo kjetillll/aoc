@@ -8,24 +8,23 @@ while(<DATA>){
 
 printf "answer example: %s\n", winner( player => {hit=>8, damage=>5, armor=>5},
 				       boss   => {hit=>12, damage=>7, armor=>2} );
-exit if not @ARGV;
-
 my %boss_input = map { /^(\w+).*?(\d+)$/; (lc$1=>$2)} <>;
 my @lose_cost;
 my $game = 0;
-for my $w  (     @{ $item{Weapon} } ){
-for my $a  ( {}, @{ $item{Armor}  } ){
-for my $r1 ( {}, @{ $item{Ring}   } ){
-for my $r2 ( {}, @{ $item{Ring}   } ){
-    deb "----------Game " . ++$game;
+for my $w  (              @{ $item{Weapon} } ){
+for my $a  ( {name=>'-'}, @{ $item{Armor}  } ){
+for my $r1 ( {name=>'-'}, @{ $item{Ring}   } ){
+for my $r2 ( {name=>'-'}, @{ $item{Ring}   } ){
+    next if $$r1{name} eq $$r2{name}; #"can't buy, for example, two rings of Damage +3"
+    deb "----------Game " . ++$game. " w: $$w{name}   a: $$a{name}   r1: $$r1{name}   r2: $$r2{name}";
     my $sum = sub{ sum map $$_{ $_[0] } // 0, $w, $a, $r1, $r2 };
     my %player_input = ( hit=>100, map { ($_=>&$sum($_)) } 'damage', 'armor' );
     my @game_input = ( player => {%player_input}, boss => {%boss_input} );
-    push @lose_cost, &$sum('cost') if 'player' ne winner( @game_input );
+    push( @lose_cost, &$sum('cost')), deb "lose_cost: ".$lose_cost[-1] if 'player' ne winner( @game_input );
 }}}}
 
-print "win costs: @lose_cost\n";
-print "answer: ".max(@lose_cost)."\n";
+print "lose costs: @{[sort{$b<=>$a}@lose_cost]}\n";
+print "Answer: ".max(@lose_cost)."\n";
 
 sub winner {
     my($attacker,$defender) = @_[0,2];
@@ -34,14 +33,15 @@ sub winner {
 	my $reduce = $p{$attacker}{damage} - $p{$defender}{armor};
 	$reduce = 1 if $reduce < 1;
 	$p{$defender}{hit} -= $reduce;
-	deb "The $attacker deals $p{$attacker}{damage} - $p{$defender}{armor} = $reduce damage; the $defender goes down to $p{$defender}{hit} hit points.";
+	deb sprintf "The %-6s deals %2d - %2d = %2d damage; the %-6s goes down to %2d hit points.",
+	    $attacker, $p{$attacker}{damage}, $p{$defender}{armor}, $reduce,$defender,$p{$defender}{hit};
 	return $attacker if $p{$defender}{hit} <= 0 and deb "$attacker wins";
 	($attacker,$defender) = ($defender,$attacker);
     }
 }
 
 #perl 2015_day_21_part_2.pl 2015_day_21_input.txt
-#Answer: 208          ERROR to high!!!
+#Answer: 201
 
 
 __DATA__

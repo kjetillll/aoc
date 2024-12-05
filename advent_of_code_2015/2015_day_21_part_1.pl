@@ -1,4 +1,3 @@
-
 use strict; use warnings; use List::Util qw(sum min); sub deb($){print$ENV{DEBUG}?"$_[0]\n":""}
 
 my(%item,$type);
@@ -9,8 +8,6 @@ while(<DATA>){
 
 printf "Answer example: %s\n", winner( player => {hit=>8, damage=>5, armor=>5},
 				       boss   => {hit=>12, damage=>7, armor=>2} );
-exit if not @ARGV;
-
 my %boss_input = map { /^(\w+).*?(\d+)$/; (lc$1=>$2)} <>;
 my @win_cost;
 my $game = 0;
@@ -18,6 +15,7 @@ for my $w  (     @{ $item{Weapon} } ){
 for my $a  ( {}, @{ $item{Armor}  } ){
 for my $r1 ( {}, @{ $item{Ring}   } ){
 for my $r2 ( {}, @{ $item{Ring}   } ){
+    next if $$r1{name} eq $$r2{name}; #"can't buy, for example, two rings of Damage +3"
     deb "----------Game " . ++$game;
     my $sum = sub{ sum map $$_{ $_[0] } // 0, $w, $a, $r1, $r2 };
     my %player_input = ( hit=>100, map { ($_=>&$sum($_)) } 'damage', 'armor' );
@@ -41,7 +39,7 @@ sub winner {
     }
 }
 
-#perl 2015_day_21.pl 2015_day_21_input.txt
+#perl 2015_day_21_part_1.pl 2015_day_21_input.txt
 #Answer: 121
 
 
