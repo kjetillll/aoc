@@ -1,53 +1,15 @@
-use Acme::Tools;
-use v5.10;
-L:
 while(<>){
-    say "L$. -- $_";
-    my($test,@n)=/\d+/g;
-    my $ops=3**(@n-1);
-    for(0..$ops-1){
-	my$o=$_;
-	my $eq=join('',map{$r="$_".substr('+*!',$o%3,1);$o/=3;$r}@n)=~s,.$,,r;
-#	say"<$eq>";
-   	1 while $eq=~s/^(\d+)([\+\*\!])(\d+)/$2 eq '+' ? $1+$3 : $2 eq '*' ? $1*$3 : $1.$3/e;
-#	die "$eq";
-	my @eq = map{($_,shift(@bin))}@n;
-#	if(eva(@eq)==$test){
-	if($eq==$test){
-	    say " new answer: $answer+$test = ".($answer+$test);
-	    $answer+=$test;
-	    push@a,$test;
-	    $ant++;
-	    next L;
-	}
+    my($test, @n) = /\d+/g;
+    for my $o (0 .. 3 ** $#n - 1){
+        my @e = @n;
+        splice @e, 0, 2, $o % 3 == 0 ? $e[0] + $e[1]
+                        :$o % 3 == 1 ? $e[0] * $e[1]
+                        :              $e[0] . $e[1] and $o/=3 while @e > 1;
+        $answer += $test, last if $e[0] == $test;
     }
-#    last if ++$i>1
+    print "line: $.   answer so far: $answer     $_"
 }
-say "ant: $ant";
-say "Answer: $answer";
+print "Answer: $answer\n"
 
-#Answer: 
-
-
-sub eva{
-#    say"...@_";
-    my @ev=@_;
-    my $n=shift@ev;
-    while(@ev>1){
-	if($ev[0] eq '+'){
-	    shift@ev;
-	    $n+=shift@ev;
-	}
-	elsif($ev[0] eq '*'){
-	    shift@ev;
-	    $n*=shift@ev
-	}
-	elsif($ev[0] eq '!'){
-	    shift@ev;
-	    $n.=shift@ev
-	}
-    }
-#    say"...n: $n";#exit if .01>rand;
-    
-    $n
-}
+#time perl 2024_day_07_part_2.pl 2024_day_07_input.txt   # 42 sec
+#Answer: 223472064194845
