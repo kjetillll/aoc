@@ -21,4 +21,4 @@ say "Answer: " . eval join '+', map {
 grep $grid{$_} == 0,
 keys %grid;
 
-#Answer: 472
+#Answer: 969
