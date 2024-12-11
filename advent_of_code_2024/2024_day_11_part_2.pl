@@ -1,7 +1,6 @@
 use v5.10; use List::Util 'sum';
-my @inp = <> =~ /\d+/g;
-my $steps = 75;
-say "Answer: ".sum map stones($_,1), @inp;
+my($steps, @input, %memoization) = (75, <>=~/\d+/g);
+say "Answer: ".sum map stones($_,1), @input;
 say "memoization keys: ".keys%memoization;
 
 sub stones {
