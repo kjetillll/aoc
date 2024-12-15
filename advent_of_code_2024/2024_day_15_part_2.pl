@@ -1,162 +1,77 @@
-use Acme::Tools; use List::Util qw(all any);
+#Animate run:
+#perl 2024_day_15_part_2.pl 2024_day_15_input.txt | perl -MTime::HiRes=usleep -pe'/move/&&usleep(50)'
 
-my $map;
-while(<>){ last if !/\S/; $map.=$_ }
-my @move=map{/./g}<>;
+use strict; use warnings; use v5.10; use List::Util qw(all); use feature 'signatures'; no warnings qw(experimental::signatures);
 
-print "Answer: <$map>";
-print srlz(\@move,'move');
-#my $x
-$map=~s/#/##/g;
-$map=~s/O/\[\]/g;
-$map=~s/\./../g;
-$map=~s/\@/\@./g;
-print$map;
+my($map,$moves) = split/\n\n/,join'',<>;
+my @move = $moves=~/./g;
+$map =~ s/./{'#','##','O','[]','.','..','@','@.'}->{$&}/ge; #part 2 map change
+my($x,$y,$w,$n,$wx,$wy,%grid)=(0,0); for($map=~/.+/g){$grid{$x++,$y}=$_ for/./g;$w//=$x;$y++;$x=0}
+($x,$y) = $map=~/@/ ? pos2xy($`) : die;
+say "x: $x   y: $y   w: $w   moves: ".@move."   init map:"; say $map;
 
-my($x,$y,%grid)=(0,0,grid());
-#die "w: $w   \n".srlz(\%grid,'grid','',1)=~s/$;/,/gr . $grid{10,3};
-
-my($x,$y)=$map=~/@/ ? pos2xy($`) : die;
-print"w: $w  pos: ".length($`)."   x: $x   y: $y\n"; #exit;
-
-my %dir=('<'=>[-1,0],'>'=>[1,0],'^'=>[0,-1],'v'=>[0,1]);
-my %rot=('<'=>0,'>'=>2,'^'=>1,'v'=>3);
-#my@box;$map=~s{\[}{my($x,$y)=(length($`)%($w+1),int(length($`)/($w+1)));push$sum+=$x+$y*100}ge;
-
-#$map=~s/\@\./.\@/ or die; @move=('<','<','<','<','<','<'); #case 1
-#$map=~s/\.([\[\]]+)\@/\@$1./ or die; @move=('<','>','>','>','>','>','>','v'); #case 2
-print"$map".("=" x 120)."\n";
-
-
+my $potential_moves = {
+    '<' => sub{[$grid{$wx,  $wy  } eq ']' => $wx-1, $wy  ],
+               [$grid{$wx-1,$wy  } eq ']' => $wx-1, $wy  ] },
+    '>' => sub{[$grid{$wx,  $wy  } eq '[' => $wx+1, $wy  ],
+               [$grid{$wx+1,$wy  } eq '[' => $wx+1, $wy  ] },
+    '^' => sub{[$grid{$wx,  $wy-1} eq '[' => $wx,   $wy-1],
+               [$grid{$wx,  $wy-1} eq '[' => $wx+1, $wy-1],
+               [$grid{$wx,  $wy-1} eq ']' => $wx,   $wy-1],
+               [$grid{$wx,  $wy-1} eq ']' => $wx-1, $wy-1] },
+    'v' => sub{[$grid{$wx,  $wy+1} eq '[' => $wx,   $wy+1],
+               [$grid{$wx,  $wy+1} eq '[' => $wx+1, $wy+1],
+               [$grid{$wx,  $wy+1} eq ']' => $wx,   $wy+1],
+               [$grid{$wx,  $wy+1} eq ']' =>, $wx-1, $wy+1] } };
 for my $move (@move){
-    %grid=grid();
-    ($x,$y)=$map=~/@/ ? pos2xy($`) : die;
-    print"--------------- move ".++$n."/".@move."   x: $x   y: $y   move: $move\n";
+    my($dx,$dy) = @{{'>',[1,0],'<',[-1,0],'v',[0,1],'^',[0,-1]}->{$move}};
+    say "--------------- move ".++$n." of ".@move."   x: $x   y: $y   move: $move";
+    my @gm = gridmoves($x, $y, $potential_moves->{$move});
+    if( all{ my($x,$y)=@$_; $grid{$x+$dx,$y+$dy} ne '#' } @gm ){
+	push @$_, $grid{join$;,@$_} for @gm;
+        for(@gm){
+            my($mx,$my,$mc) = @$_;
+            my $pos     = xy2pos($mx,$my);
+            my $pos_new = xy2pos($mx+$dx, $my+$dy);
+            substr($map,$pos_new,1) = $grid{$mx+$dx, $my+$dy} = $mc;
+            substr($map,$pos,    1) = $grid{$mx,     $my    } = '.';
+        }
+	$x += $dx, $y += $dy if @gm
+    }
+    say $map;
+}
+say "Answer: " . eval join '+', map{my($x,$y)=/\d+/g;$x+$y*100}grep$grid{$_} eq '[',keys%grid;
+
+sub gridmoves($x,$y,$potential_moves){
+    my @work = ( [$x,$y] );
     my @m;
-    if($move eq '<'){
-	@m=lefts($x,$y);
-	for(@m){
-	    my($mx,$my,$mc)=@$_;
-	    my$p=xy2pos($mx,$my);
-	    substr($map,$p-1,1)=$mc;
-	    substr($map,$p  ,1)='.';
-	}
+    while(@work){
+	unshift @m, my $work = shift@work;
+	($wx,$wy) = @$work;
+	my @moves = grep shift@$_, &$potential_moves;
+	push @work, @moves
     }
-    elsif($move eq '>'){
-	@m=rights($x,$y);
-	for(@m){
-	    my($mx,$my,$mc)=@$_;
-	    my$p=xy2pos($mx,$my);
-	    substr($map,$p+1,1)=$mc;
-	    substr($map,$p  ,1)='.';
-	}
-    }
-    elsif($move eq '^'){
-	@m=ups($x,$y);
-	for(@m){
-	    my($mx,$my,$mc)=@$_;
-	    my$pu=xy2pos($mx,$my-1);
-	    my$p=xy2pos($mx,$my);
-	    substr($map,$pu,1)=$mc;
-	    substr($map,$p  ,1)='.';
-	}
-    }
-    elsif($move eq 'v'){
-	@m=downs($x,$y);
-	for(@m){
-	    my($mx,$my,$mc)=@$_;
-	    my$pd=xy2pos($mx,$my+1);
-	    my$p=xy2pos($mx,$my);
-	    substr($map,$pd,1)=$mc;
-	    substr($map,$p  ,1)='.';
-	}
-    }
-    print srlz(\@m,'move_now').$map;
+    @m
 }
-my$sum=0;
-$map=~s{[O\[]}{my($x,$y)=(length($`)%($w+1),int(length($`)/($w+1)));$sum+=$x+$y*100}ge;
-print "Answer: $sum";
-#.eval join '+', map {
+sub pos2xy($p){$p=length$p if$p=~/\D/;($p%($w+1),int($p/($w+1)))}
+sub xy2pos($x,$y){$x+$y*($w+1)}
 
-sub lefts{
-    my($x,$y)=@_;
-    my @w=([$x,$y,$grid{$x,$y}]);
-#    my @w=(left($x,$y) eq ']' ? [$x-1,$y,']'] : ());
-    my %v;
-    my @m;
-    while(@w){
-	my $w=shift@w;
-	my($wx,$wy,$wc)=@$w;
-	push @m, $w;
-	push @w, [$wx-1,$wy,'['] if $wc eq ']';
-	push @w, [$wx-1,$wy,']'] if left($wx,$wy) eq ']';
-    }
-    (any{left(@$_) eq '#'}@m) ? () : reverse@m
-}
+__END__
 
-sub rights{
-    my($x,$y)=@_;
-    my @w=([$x,$y,$grid{$x,$y}]);
-    my %v;
-    my @m;
-    while(@w){
-	my $w=shift@w;
-	my($wx,$wy,$wc)=@$w;
-	push @m, $w;
-	push @w, [$wx+1,$wy,']'] if $wc eq '[';
-	push @w, [$wx+1,$wy,'['] if right($wx,$wy) eq '[';
-    }
-    (any{right(@$_) eq '#'}@m) ? () : reverse@m
-}
+Run:
+time perl 2024_day_15_part_2.pl 2024_day_15_input.txt |tail      # 0.24 sec
 
-sub ups{
-    my($x,$y)=@_;
-    my @w=([$x,$y,$grid{$x,$y}]);
-    my %v;
-    my @m;
-    while(@w){
-	my $w=shift@w;
-	my($wx,$wy,$wc)=@$w;
-	push @m, $w;
-	push @w, [$wx,  $wy-1,'['],
-	         [$wx+1,$wy-1,']'] if $grid{$wx,$wy-1} eq '[';
-	push @w, [$wx,  $wy-1,']'],
-	         [$wx-1,$wy-1,'['] if $grid{$wx,$wy-1} eq ']';
-    }
-    (any{up(@$_) eq '#'}@m) ? () : reverse@m
-}
+####.......[].[][]..[].[].........................[][]##.[].................[]..[]##[][]........[]##
+####........[]..[][]##[][]..##......##[]..[].[][]...####....##..........[]......[]..##[]..........##
+##..[]..........[]##................[]..[].[][][][].....................##[][]..[]..[][]..[][]....##
+##[]..............[]##........[]...............[].[]..........[]..[]......[]....[]..##[]..[]....[]##
+##...............[].......[].......[].........[][][].......[].[]............[]........[][]........##
+##[].......................[]................[][].[]........[]..##....[]....[]......[]....[][]....##
+##[]...[]....[].......##.[].[]..[][].[].....[][]...[]....[].##[][]....[]......[]....[]..[]........##
+##[][][][][]##[]....[][]####....##[]......[][][]..[]..[][]....[][]........[]........[]..[]....##..##
+####################################################################################################
+Answer: 1543141
 
-
-sub downs{
-    my($x,$y)=@_;
-    print "downs   x: $x   y: $y\n";
-    my @w=([$x,$y,$grid{$x,$y}]);
-    my %v;
-    my @m;
-    while(@w){
-	print "downs work: ".srlz(\@w,'w');
-	my $w=shift@w;
-	my($wx,$wy,$wc)=@$w;
-	push @m, $w;
-	push @w, [$wx,  $wy+1,'['],
-	         [$wx+1,$wy+1,']'] if $grid{$wx,$wy+1} eq '[';
-	push @w, [$wx,  $wy+1,']'],
-	         [$wx-1,$wy+1,'['] if $grid{$wx,$wy+1} eq ']';
-    }
-    (any{down(@$_) eq '#'}@m) ? () : reverse@m
-}
-
-
-sub rotate_ccw { my($i,@s);my$w=$_[0]=~/.*/?length$&:die;$i=$w,map$s[--$i].=$_,split// for split/\n/,pop;join"\n",@s } #counter clockwise
-sub rotate_cw { my@l=reverse split/\n/,pop;my@r;my$i=0;while(length$l[0]){s/^.//,$r[$i].=$&for@l;$i++}join"\n",@r  } #clockwise
-sub pos2xy{my$p=pop;$p=length$p if$p!~/^\d+$/;($p%($w+1),int($p/($w+1)))}
-sub xy2pos{my($x,$y)=@_;$x+$y*($w+1)}
-sub left {my($x,$y)=@_;$grid{$x-1,$y}}
-sub right{my($x,$y)=@_;$grid{$x+1,$y}}
-sub up   {my($x,$y)=@_;$grid{$x,$y-1}}
-sub down {my($x,$y)=@_;$grid{$x,$y+1}}
-sub grid{
-    my($x,$y,%grid)=(0,0);
-    for my $l ($map=~/.+/g){$grid{$x++,$y} = $_ for $l=~/./g; $w//=$x;$y++; $x=0 };
-    %grid;
-}
+real    0m0,235s
+user    0m0,224s
+sys     0m0,052s
