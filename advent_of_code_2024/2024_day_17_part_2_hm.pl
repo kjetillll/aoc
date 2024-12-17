@@ -1,60 +1,41 @@
 use v5.10; use Carp;
 my $SAMPLES = $ENV{SAMPLES} // 1000; #hm, more is safer? for my input: min ~50, 2000 gives wrong answer
-my %op = qw( 0 adv   1 bxl   2 bst   3 jnz   4 bxc   5 out   6 bdv   7 cdv );
-
-sub run_program {
-    my($regs,@program) = @_;
-    my %r = %$regs;
-    my $ip = 0;
-    my @out;
-    my $combo = sub {
-	my $opnd = shift;
-	0 <= $opnd && $opnd <= 3 ? $opnd
-        :$opnd == 4 ? $r{A}
-	:$opnd == 5 ? $r{B}
-	:$opnd == 6 ? $r{C}
-	:$opnd == 7 ? die "Reserved, invalid opnd 7"
-        : die "Invalid combo, opnd: $opnd";
-    };
-    my $clock=0;
-    while($ip <= $#program){ $clock++;
-	my($opcode,$opnd) = @program[$ip,$ip+1];
-	my $next = $ip+2;
+sub compile {
+    my @program=@_;
+    my $perl='';
+    my $add=sub{$perl.=sprintf("    ".shift,@_).";\n"};
+    my %op = qw( 0 adv   1 bxl   2 bst   3 jnz   4 bxc   5 out   6 bdv   7 cdv );
+    for(grep $_%2==0, 0..$#program){
+	my($opcode,$opnd)=@program[$_,$_+1];
 	my $op = $op{$opcode};
-	if   ( $op eq 'adv' ){ $r{A} = int( $r{A} / 2 ** &$combo($opnd) ) }
-	elsif( $op eq 'bxl' ){ $r{B} = $r{B} ^ $opnd }
-	elsif( $op eq 'bst' ){ $r{B} = &$combo($opnd) % 8 }
-	elsif( $op eq 'jnz' ){ $next = $opnd if $r{A} != 0 }
-	elsif( $op eq 'bxc' ){ $r{B} = $r{B} ^ $r{C} }
-	elsif( $op eq 'out' ){ push @out, &$combo($opnd) % 8 }
-	elsif( $op eq 'bdv' ){ $r{B} = int( $r{A} / 2 ** &$combo($opnd) ) }
-	elsif( $op eq 'cdv' ){ $r{C} = int( $r{A} / 2 ** &$combo($opnd) ) }
-	else {die "invalid op: $op   opcode: $opcode"}
-	$ip = $next;
+	say"opcode: $opcode   opnd: $opnd";
+	my $combo = 0<=$opnd && $opnd <= 3 ? $opnd : $opnd==4 ? '$rA' : $opnd==5 ? '$rB' : $opnd==6 ? '$rC' : -1; #die"opnd: $opnd";
+	if   ( $op eq 'adv' ){ &$add('$rA = int( $rA / 2 ** %s )', $combo) }
+	elsif( $op eq 'bxl' ){ &$add('$rB = $rB ^ %s',$opnd) }
+	elsif( $op eq 'bst' ){ &$add('$rB = %s % 8',$combo) }
+	elsif( $op eq 'jnz' ){ $perl = "do{\n$perl } until \$rA == 0" }
+	elsif( $op eq 'bxc' ){ &$add('$rB = $rB ^ $rC') }
+	elsif( $op eq 'out' ){ &$add('push @out, %s % 8',$combo) }
+	elsif( $op eq 'bdv' ){ &$add('$rB = int( $rA / 2 ** %s)',$combo) }
+	elsif( $op eq 'cdv' ){ &$add('$rC = int( $rA / 2 ** %s)',$combo) }
+	else {die "op: $op"}
     }
-    push @clocks,$clock;
-    (\@out,\%r)
+    $perl = sprintf('sub run_program { my($rA,$rB,$rC) = @_; my @out; %s; return @out }',$perl);
+    die if $perl=~s/until/until/g > 1;
+    say "compiles: $perl";
+    eval $perl; $@ and die$@;
 }
 
-sub test {
-    my($out,$r);
-    my $tr = sub{(shift() ? 'ok' : 'NOT OK').' test'}; #tr test result
-    ($out,$r) = run_program( {C=>9},   2,6);         say &$tr($$r{B}==1);
-    ($out,$r) = run_program( {A=>10},  5,0,5,1,5,4); say &$tr("@$out" eq '0 1 2');
-    ($out,$r) = run_program( {A=>2024},0,1,5,4,3,0); say &$tr("@$out" eq '4 2 5 6 7 7 7 7 3 1 0' && $r{A}==0);
-    ($out,$r) = run_program( {B=>29},  1,7);         say &$tr($$r{B}==26);
-}
 my(%r,@program);
 while(<>){
     if   (/Register (\w): (\d+)/){ $r{$1} = $2 }
     elsif(/Program: (\S+)/      ){ @program = split/,/,$1 }
 }
-printf"program: %d %d $op{$program[$_]}\n", @program[$_, $_+1] for grep$_%2==0,0..$#program;
-test();
+compile(@program);
 
 sub similarity_for_A {
     my $A = shift;
-    my @out = @{ ( run_program( { %r, A=>$A },@program) )[0] }; #override regA
+    my @out = run_program( $A, $r{B}, $r{C} ); #override regA
     croak "A: $A   wrong out len: ".@out.", should be ".@program if @out != @program;
     my $sim = 0;
     $sim++ while $program[-$sim-1] == $out[-$sim-1] and $sim<@program;
@@ -96,10 +77,7 @@ while( @work ){
 }
 my $CORRECT = $ENV{CORRECT} // 190384615275535;
 use Acme::Tools qw(avg max min srlz);
-say "Answer: $best_A ".($best_A eq $CORRECT ? 'ok   ' : 'wrong')."  samples: $SAMPLES   runtime: ".(time-$^T)."s   avg clock: ".avg(@clocks)." clocks: ".@clocks." min cl: ".min(@clocks);
-my %clock; $clock{$_}++ for @clocks;
-print srlz(\%clock,'clock','',1);
-#say "clock $_:   ".(grep{$_==)." times" for sort{$a<=>$b}uniq(@clocks);
+say "Answer: $best_A ".($best_A eq $CORRECT ? 'ok   ' : 'wrong')."  samples: $SAMPLES   runtime: ".(time-$^T)."s";
 
 __END__
 
