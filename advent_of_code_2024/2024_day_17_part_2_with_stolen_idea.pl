@@ -51,5 +51,5 @@ say "Answer: $A";
 # time perl 2024_day_17_part_2_better.pl 2024_day_17_input.txt    #0.01 sec
 # Answer: 190384615275535
 
-# 2024_day_17_part_2.pl          me, myself and I
-# 2024_day_17_part_2_better.pl   stole idea
+# 2024_day_17_part_2.pl                     me, myself and I
+# 2024_day_17_part_2_with_stolen_idea.pl    yup
