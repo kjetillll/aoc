@@ -8,5 +8,5 @@ shift@inp;
 say "Answer: $a";
 
 # time perl 2024_day_19_part_1.pl 2024_day_19_example.txt
-# time perl 2024_day_19_part_1.pl 2024_day_19_input.txt       # ?.?? sec
+# time perl 2024_day_19_part_1.pl 2024_day_19_input.txt       # 0.01 sec
 # Answer: 369
