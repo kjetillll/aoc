@@ -18,3 +18,7 @@ while(<>){
 }
 say "seqs: " . keys %seqsum;
 say "Answer: " . max values %seqsum;
+
+# Answer: 1998
+# time perl 2024_day_22_part_2.pl 2024_day_22_example2.txt    # Answer: 23   0.017 sec
+# time perl 2024_day_22_part_2.pl 2024_day_22_input.txt       # Answer: 1998   3.54 sec
