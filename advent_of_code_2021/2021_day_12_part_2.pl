@@ -1,17 +1,10 @@
-use v5.10;
-
 while(<>){
     my($from,$to)=/\w+/g;
-    push @{ $fromto{$from} }, $to;
-    push @{ $fromto{$to}   }, $from;
+    push @{ $fromto{$from} }, $to   if $from ne 'end' and $to ne 'start';
+    push @{ $fromto{$to}   }, $from if $from ne 'start' and $to ne 'end';
 }
 
-sub bad_path_part_1 {
-    my %visits; $visits{$_}++ for grep !/[A-Z]/, @_;
-    0+grep $_>1, values %visits;
-}
-
-sub bad_path_part_2 {
+sub bad_path {
     my $limit = 2;
     my %seen;
     for(@_){
@@ -28,9 +21,11 @@ while( @work ){
     my @path = @{ shift @work };
     next if $seen{ join '-', @path }++;
     next if $path[-1] eq 'end';
-    push @work, map [ @path, $_ ], grep /[A-Z]/ || !bad_path_part_2(@path,$_), grep !/^start$/, @{ $fromto{ $path[-1] } };
+    push @work, map [ @path, $_ ],
+                grep /[A-Z]/ || !bad_path(@path,$_),
+                @{ $fromto{ $path[-1] } };
 }
-say "Answer: " . grep /-end$/, keys %seen;
+printf "Answer: %d\n", 0 + grep /-end$/, keys %seen;
 
 # time perl 2021_day_12_part_2.pl 2021_day_12_input.txt     # 4.90 sec
 # Answer: 146553
