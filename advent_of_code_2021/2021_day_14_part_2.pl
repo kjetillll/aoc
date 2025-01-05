@@ -8,7 +8,7 @@ while(<>){
 my %c; #count of letter pairs
 $c{ substr $tmpl, $_, 2 }++ for 0 .. length($tmpl) - 2;
 
-for ( 1 .. 10 ){
+for ( 1 .. 40 ){
     my %cnew;
     for( keys %c ){
 	if( exists $ins{$_} ) {
@@ -27,6 +27,6 @@ $freq{ substr $tmpl, $_, 1 }++ for 0, -1; #make 1st & last also apear twice in %
 my @freq = sort { $b <=> $a } values %freq;
 printf "Answer: %d\n", ( $freq[0] - $freq[-1] ) / 2;
 
-# time perl 2021_day_14_part_1.pl 2021_day_14_example.txt  # 1588
-# time perl 2021_day_14_part_1.pl 2021_day_14_input.txt    # 0.002 sec
-# Answer: 2010
+# time perl 2021_day_14_part_2.pl 2021_day_14_example.txt  # 2188189693529
+# time perl 2021_day_14_part_2.pl 2021_day_14_input.txt    # 0.004 sec
+# Answer: 2437698971143
