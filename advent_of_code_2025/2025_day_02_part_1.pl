@@ -5,7 +5,7 @@ for(@l){
     my($a,$b)=@$_;
     print "a: $a   b: $b   ";
     for($a .. $b){
-	$invalid += $_ if /^(\d+)\1$/ and print"($_)   ";
+        $invalid += $_ if /^(\d+)\1$/ and print"($_)   ";
     }
     print "so far: $invalid\n";
 }
