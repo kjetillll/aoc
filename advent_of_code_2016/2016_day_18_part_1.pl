@@ -1,4 +1,4 @@
-use v5.10; use strict; use warnings; use Acme::Tools;
+use v5.10; use strict; use warnings;
 my $rows = $ARGV[0] =~ /example/ ? 10 : $0 =~ /part_2/ ? 40 : 400000;
 my @t = ( <> =~ s/[^\^\.]//gr );
 
@@ -45,6 +45,6 @@ sub row {
     } 1 .. length($last)-2
 }
 
-# perl 2016_day_18_part_1.pl 2016_day_18_input.txt      # 10.6 seconds
+# perl 2016_day_18_part_1.pl 2016_day_18_input.txt      # 10.5 seconds
 # Answer part 1: 49
 # Answer part 2: 20003246
