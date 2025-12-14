@@ -41,10 +41,17 @@ while(1){
     %p = (%p, %pp);
     last;
 }
+for my $y ( 1 .. $maxy ){
+    my $c = 0;
+    exists $p{$_,$y} and $p{$_, $y} = ++$c or $c = 0 for reverse 1 .. $maxx;
+}
+
 if( $ENV{VERBOSE} ){
-  for my $y (1..max(map$$_[1],@p)){
-  for my $x (1..max(map$$_[0],@p)){
-    print $p{$x,$y} // '.';
+  for my $y ( 1 .. max( map $$_[1], @p) ){
+  for my $x ( 1 .. max( map $$_[0], @p) ){
+      print '.' and next if !exists $p{$x, $y};
+      print '', ('a'..'z','A'..'Z')[$& % 52 - 1] and next if $p{$x,$y}=~/^\d+$/;
+      print $p{$x,$y};
   } print "\n"}
 }
 say "paint trails: $pt";
@@ -65,19 +72,20 @@ for my $p2 (@p){
              * ( $ym{$y2} - $ym{$y1} + 1 );
     next if $area <= $max_area and ++$next;
     for my $ay ($y1 .. $y2){
-    for my $ax ($x1 .. $x2){ next P if !exists $p{$ax, $ay} }} #area not all colored
+	my $ax = $x1;
+	while($ax <= $x2){
+	    next P if !exists $p{$ax, $ay};
+	    $ax += $p{$ax, $ay};
+	}
+    }
     $max_area = $area;
-    say "max area so far: $max_area";
 }}
+print"\n";
 say "Answer: $max_area";
 
 
 # perl 2025_day_09_part_2.pl 2025_day_09_example.txt
 # Answer: 24
 
-# perl 2025_day_09_part_2.pl 2025_day_09_input.txt     # 8.1 seconds
+# perl 2025_day_09_part_2.pl 2025_day_09_input.txt     # 0.45 seconds
 # Answer: 1543501936
-
-#todo:
-#speedup?: shoelace or x-ray algorithms to chech if area is inside?
-#speedup!: register instead of 'o' how many x's can be skipped ahead because they are all painted, probably huge speedup
