@@ -41,6 +41,8 @@ while(1){
     %p = (%p, %pp);
     last;
 }
+
+#---- speedup: convert %p to skip ahead steps along x's instead of #, X and o
 for my $y ( 1 .. $maxy ){
     my $c = 0;
     exists $p{$_,$y} and $p{$_, $y} = ++$c or $c = 0 for reverse 1 .. $maxx;
