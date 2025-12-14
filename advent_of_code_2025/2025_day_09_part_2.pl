@@ -27,6 +27,7 @@ while(1){
     $pt++; #paint trials
     my @q = ( [int(1+rand($maxx)),    #random x and y
                int(1+rand($maxy))] );
+    next TRIAL if exists $p{$q[0][0], $q[0][1]};
     my %pp;
     while(@q){
         my($qx, $qy) = @{ shift @q };
