@@ -4,7 +4,7 @@ say "p: ".@p."   uniq x: ".uniq(map$$_[0],@p)."   uniq y: ".uniq(map$$_[1],@p);
 my $i=0;
 my %mx = map { $_ => ++$i } sort {$a<=>$b} uniq map $$_[0], @p; $i=0;
 my %my = map { $_ => ++$i } sort {$a<=>$b} uniq map $$_[1], @p;
-@p = map [$mx{$$_[0]}, $my{$$_[1]}], @p;  #convert to a quicker smaller world with only enumed uniq coords
+@p = map [$mx{$$_[0]}, $my{$$_[1]}], @p;  #coordinate compresion: convert to a quicker smaller paint job and area check
 my %xm = reverse %mx; #for converting back later when calculating area
 my %ym = reverse %my;
 my %p = map { join($;, @$_) => '#' } @p; #grid
@@ -87,5 +87,5 @@ say "Answer: $max_area";
 # perl 2025_day_09_part_2.pl 2025_day_09_example.txt
 # Answer: 24
 
-# perl 2025_day_09_part_2.pl 2025_day_09_input.txt     # 0.45 seconds
+# perl 2025_day_09_part_2.pl 2025_day_09_input.txt     # 0.44seconds
 # Answer: 1543501936
