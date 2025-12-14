@@ -72,11 +72,11 @@ for my $p2 (@p){
              * ( $ym{$y2} - $ym{$y1} + 1 );
     next if $area <= $max_area and ++$next;
     for my $ay ($y1 .. $y2){
-	my $ax = $x1;
-	while($ax <= $x2){
-	    next P if !exists $p{$ax, $ay};
-	    $ax += $p{$ax, $ay};
-	}
+        my $ax = $x1;
+        while($ax <= $x2){
+            next P if !exists $p{$ax, $ay};
+            $ax += $p{$ax, $ay};
+        }
     }
     $max_area = $area;
 }}
